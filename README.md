@@ -1,6 +1,7 @@
 # Data Exporter
 
 This simple node will export pointcloud data and image data to PCD and JPG files respectively.
+The PCD file saving was changed from the original compressedbinaryPCD into PCDAscii.
 
 The exported data will be saved under the ${HOME} directory of the user under the name `output_YYYYMMDDHHmmSS`.
  
