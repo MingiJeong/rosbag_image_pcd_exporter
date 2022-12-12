@@ -197,8 +197,8 @@ void ImageCloudDataExport::Run()
     homedir = getpwuid(getuid())->pw_dir;
   }
 
-  path_pointcloud_str_ = std::string(homedir) + "/output_" + datetime_str + "/pointcloud/";
-  path_image_str_ = std::string(homedir) + "/output_" + datetime_str + "/image/";
+  path_pointcloud_str_ = std::string(homedir) + "/output_" + datetime_str + "/pointclouds/";
+  path_image_str_ = std::string(homedir) + "/output_" + datetime_str + "/images/";
 
   leading_zeros = 6;
 
