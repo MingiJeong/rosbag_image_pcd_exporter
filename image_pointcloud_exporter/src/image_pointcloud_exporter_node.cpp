@@ -22,6 +22,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/image_encodings.h>
 
 #include <message_filters/subscriber.h>
@@ -46,10 +47,12 @@ private:
   ros::Subscriber cloud_sub_;
   ros::Subscriber image_sub_;
   message_filters::Subscriber<sensor_msgs::PointCloud2> *cloud_sync_sub_;
-  message_filters::Subscriber<sensor_msgs::Image> *image_sync_sub_;
+  // message_filters::Subscriber<sensor_msgs::Image> *image_sync_sub_;
+  message_filters::Subscriber<sensor_msgs::CompressedImage> *image_sync_sub_;
 
   typedef
-  message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> SyncPolicyT;
+  // message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::Image> SyncPolicyT;
+  message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, sensor_msgs::CompressedImage> SyncPolicyT;
 
   message_filters::Synchronizer<SyncPolicyT>
     *data_synchronizer_;
@@ -61,10 +64,12 @@ private:
 
   void LidarCloudCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud);
 
-  void ImageCallback(const sensor_msgs::ImageConstPtr &in_image_msg);
+  // void ImageCallback(const sensor_msgs::ImageConstPtr &in_image_msg);
+  void ImageCallback(const sensor_msgs::CompressedImageConstPtr &in_image_msg);
 
   void SyncedDataCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud,
-    const sensor_msgs::ImageConstPtr &in_image_msg);
+    // const sensor_msgs::ImageConstPtr &in_image_msg);
+    const sensor_msgs::CompressedImageConstPtr &in_image_msg);
 };
 
 ImageCloudDataExport::ImageCloudDataExport() :
@@ -75,13 +80,14 @@ ImageCloudDataExport::ImageCloudDataExport() :
 }
 
 
-void ImageCloudDataExport::ImageCallback(const sensor_msgs::ImageConstPtr &in_image_msg)
+// void ImageCloudDataExport::ImageCallback(const sensor_msgs::ImageConstPtr &in_image_msg)
+void ImageCloudDataExport::ImageCallback(const sensor_msgs::CompressedImageConstPtr &in_image_msg)
 {
   cv_bridge::CvImagePtr cv_image = cv_bridge::toCvCopy(in_image_msg, sensor_msgs::image_encodings::BGR8);
   cv::Mat current_image = cv_image->image;
 
   std::string string_counter = std::to_string(image_frame_counter_);
-  std::string file_path = path_image_str_ + "image_" + std::string(leading_zeros - string_counter.length(), '0') +
+  std::string file_path = path_image_str_ + std::string(leading_zeros - string_counter.length(), '0') +
                           string_counter + ".jpg";
 
   cv::imwrite(file_path, current_image);
@@ -95,7 +101,8 @@ void ImageCloudDataExport::ImageCallback(const sensor_msgs::ImageConstPtr &in_im
 void
 ImageCloudDataExport::SyncedDataCallback(
   const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud,
-  const sensor_msgs::ImageConstPtr &in_image_msg)
+  const sensor_msgs::CompressedImageConstPtr &in_image_msg)
+  // const sensor_msgs::ImageConstPtr &in_image_msg)
 {
   ROS_INFO("[ImageCloudDataExport] Frame Synced: %d", in_image_msg->header.stamp.sec);
   LidarCloudCallback(in_sensor_cloud);
@@ -111,7 +118,7 @@ void ImageCloudDataExport::LidarCloudCallback(const sensor_msgs::PointCloud2Cons
 
   std::string string_counter = std::to_string(cloud_frame_counter_);
   std::string file_path =
-    path_pointcloud_str_ + "scan_" + std::string(leading_zeros - string_counter.length(), '0') + string_counter;
+    path_pointcloud_str_ + std::string(leading_zeros - string_counter.length(), '0') + string_counter;
 
   /*std::ofstream pointcloud_file(file_path + ".txt");
   if (!pointcloud_file.fail())
@@ -126,7 +133,8 @@ void ImageCloudDataExport::LidarCloudCallback(const sensor_msgs::PointCloud2Cons
     pointcloud_file.close();
   }*/
   //save PCD file as well
-  pcl::io::savePCDFileBinaryCompressed(file_path + ".pcd", *cloud_ptr);
+  // pcl::io::savePCDFileBinaryCompressed(file_path + ".pcd", *cloud_ptr);
+  pcl::io::savePCDFileASCII(file_path + ".pcd", *cloud_ptr);
   if(!sync_topics_)
   {
     cloud_frame_counter_++;
@@ -158,7 +166,10 @@ void ImageCloudDataExport::Run()
     cloud_sync_sub_ = new message_filters::Subscriber<sensor_msgs::PointCloud2>(node_handle_,
                                                                            points_src,
                                                                            1);
-    image_sync_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(node_handle_,
+    // image_sync_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(node_handle_,
+    //                                                                  image_src,
+    //                                                                  1);
+    image_sync_sub_ = new message_filters::Subscriber<sensor_msgs::CompressedImage>(node_handle_,
                                                                      image_src,
                                                                      1);
     data_synchronizer_ =
