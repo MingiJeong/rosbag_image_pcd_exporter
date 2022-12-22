@@ -46,6 +46,9 @@ private:
   ros::NodeHandle node_handle_;
   ros::Subscriber cloud_sub_;
   ros::Subscriber image_sub_;
+  ros::Subscriber cloud_sync_sub_original_;
+  ros::Publisher cloud_sync_converter_pub_;
+  ros::Time time_stamp_;
   message_filters::Subscriber<sensor_msgs::PointCloud2> *cloud_sync_sub_;
   // message_filters::Subscriber<sensor_msgs::Image> *image_sync_sub_;
   message_filters::Subscriber<sensor_msgs::CompressedImage> *image_sync_sub_;
@@ -59,13 +62,16 @@ private:
 
   size_t image_frame_counter_, cloud_frame_counter_;
   bool sync_topics_;
+  bool ouster_use_;
   int leading_zeros;
   std::string path_pointcloud_str_, path_image_str_;
 
   void LidarCloudCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud);
+  void LidarCloudCallbackTimer(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud_timer);
 
   // void ImageCallback(const sensor_msgs::ImageConstPtr &in_image_msg);
   void ImageCallback(const sensor_msgs::CompressedImageConstPtr &in_image_msg);
+  void ImageCallbackTimer(const sensor_msgs::CompressedImageConstPtr &in_image_msg_timer);
 
   void SyncedDataCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud,
     // const sensor_msgs::ImageConstPtr &in_image_msg);
@@ -96,6 +102,11 @@ void ImageCloudDataExport::ImageCallback(const sensor_msgs::CompressedImageConst
     image_frame_counter_++;
   }
 
+}
+
+void ImageCloudDataExport::ImageCallbackTimer(const sensor_msgs::CompressedImageConstPtr &in_image_msg_timer)
+{
+  time_stamp_ = in_image_msg_timer->header.stamp;  
 }
 
 void
@@ -141,6 +152,18 @@ void ImageCloudDataExport::LidarCloudCallback(const sensor_msgs::PointCloud2Cons
   }
 }
 
+void ImageCloudDataExport::LidarCloudCallbackTimer(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud_timer)
+{
+  // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
+  // pcl::fromROSMsg(*in_sensor_cloud_timer, *cloud_ptr);
+
+  sensor_msgs::PointCloud2 output;
+  output = *in_sensor_cloud_timer;
+  output.header.stamp = time_stamp_;
+  cloud_sync_converter_pub_.publish(output);
+
+}
+
 
 void ImageCloudDataExport::Run()
 {
@@ -156,6 +179,9 @@ void ImageCloudDataExport::Run()
   private_node_handle.param<bool>("sync_topics", sync_topics_, false);
   ROS_INFO("[ImageCloudDataExport] sync_topics: %d", sync_topics_);
 
+  private_node_handle.param<bool>("ouster_use", ouster_use_, false);
+  ROS_INFO("[ImageCloudDataExport] ouster_use: %d", ouster_use_);
+
   if(!sync_topics_)
   {
     cloud_sub_ = node_handle_.subscribe(points_src, 10, &ImageCloudDataExport::LidarCloudCallback, this);
@@ -163,9 +189,26 @@ void ImageCloudDataExport::Run()
   }
   else
   {
-    cloud_sync_sub_ = new message_filters::Subscriber<sensor_msgs::PointCloud2>(node_handle_,
+    if(ouster_use_)
+    {
+      std::string points_src_converted; 
+      points_src_converted = points_src + "_converted";
+      cloud_sync_sub_original_ = node_handle_.subscribe(points_src, 10, &ImageCloudDataExport::LidarCloudCallbackTimer, this);
+      cloud_sync_converter_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2> (points_src_converted, 1);
+      image_sub_ = node_handle_.subscribe(image_src, 10, &ImageCloudDataExport::ImageCallbackTimer, this);
+          // time sync subscriber
+      cloud_sync_sub_ = new message_filters::Subscriber<sensor_msgs::PointCloud2>(node_handle_,
+                                                                           points_src_converted,
+                                                                           1);
+    }
+    else
+    {
+    // time sync subscriber
+      cloud_sync_sub_ = new message_filters::Subscriber<sensor_msgs::PointCloud2>(node_handle_,
                                                                            points_src,
                                                                            1);
+    }
+
     // image_sync_sub_ = new message_filters::Subscriber<sensor_msgs::Image>(node_handle_,
     //                                                                  image_src,
     //                                                                  1);
