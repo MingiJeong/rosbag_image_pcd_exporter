@@ -26,8 +26,9 @@ The exported data will be saved under the ${HOME} directory of the user under th
  
  1. Compile using `catkin_make` under a valid catkin workspace.
  2. Source the terminal in the workspace `source devel/setup.bash`.
- 3. Execute `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/velodyne_points`.
- 
+ 3. Execute 
+    1. Velodyne `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/velodyne_points`.
+    2. Ouster `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/ouster/points ouster_use:=true`.
  
  
  
