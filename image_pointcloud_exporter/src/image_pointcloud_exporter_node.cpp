@@ -219,7 +219,7 @@ void ImageCloudDataExport::Run()
         new message_filters::Synchronizer<SyncPolicyT>(SyncPolicyT(10),
                                                        *cloud_sync_sub_,
                                                        *image_sync_sub_);
-    data_synchronizer_->setMaxIntervalDuration(ros::Duration(0.5)); // https://answers.ros.org/question/284758/roscpp-message_filters-approximatetime-api-questions/
+    data_synchronizer_->setMaxIntervalDuration(ros::Duration(0.1)); // https://answers.ros.org/question/284758/roscpp-message_filters-approximatetime-api-questions/
     data_synchronizer_->registerCallback(
         boost::bind(&ImageCloudDataExport::SyncedDataCallback, this, _1, _2));
   }
@@ -242,7 +242,7 @@ void ImageCloudDataExport::Run()
   }
 
   path_pointcloud_str_ = std::string(homedir) + "/output_" + datetime_str + "/point_clouds/";
-  path_image_str_ = std::string(homedir) + "/output_" + datetime_str + "/images/";
+  path_image_str_ = std::string(homedir) + "/output_" + datetime_str + "/images/CAM_FRONT/";
 
   leading_zeros = 6;
 
