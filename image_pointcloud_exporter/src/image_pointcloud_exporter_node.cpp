@@ -64,7 +64,7 @@ private:
   bool sync_topics_;
   bool ouster_use_;
   int leading_zeros;
-  std::string path_pointcloud_str_, path_image_str_;
+  std::string path_pointcloud_str_, path_image_str_, path_timestamp_str_; 
 
   void LidarCloudCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud);
   void LidarCloudCallbackTimer(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud_timer);
@@ -109,15 +109,33 @@ void ImageCloudDataExport::ImageCallbackTimer(const sensor_msgs::CompressedImage
   time_stamp_ = in_image_msg_timer->header.stamp;  
 }
 
-void
-ImageCloudDataExport::SyncedDataCallback(
+void ImageCloudDataExport::SyncedDataCallback(
   const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud,
   const sensor_msgs::CompressedImageConstPtr &in_image_msg)
   // const sensor_msgs::ImageConstPtr &in_image_msg)
 {
-  ROS_INFO("[ImageCloudDataExport] Frame Synced: %d", in_image_msg->header.stamp.sec);
+  // timesync data 
+  std::stringstream ss;
+  std::string time_stamp_ss;
+  ss << time_stamp_.sec << "." << std::setw(9) << std::setfill('0') << time_stamp_.nsec;
+  time_stamp_ss = ss.str();
+  ROS_INFO("[ImageCloudDataExport] Frame Synced: %s", time_stamp_ss.c_str());
+  
+  // each data callback and save -> .jpg, .pcd
   LidarCloudCallback(in_sensor_cloud);
   ImageCallback(in_image_msg);
+
+  // timestamp saving
+  std::string timestamp_path = path_timestamp_str_ + "timestamp.txt";
+  std::ofstream outputFile(timestamp_path, std::ios::app);
+  // outfile.open(timestamp_path);
+  if (!outputFile.is_open()) {
+    std::cerr << "Error: Unable to open the timestamp file." << std::endl;
+  }
+  outputFile << cloud_frame_counter_ << "," << time_stamp_ss << std::endl;
+  outputFile.close();
+
+  // increment counter
   cloud_frame_counter_++;
   image_frame_counter_++;
 }
@@ -243,17 +261,21 @@ void ImageCloudDataExport::Run()
 
   path_pointcloud_str_ = std::string(homedir) + "/output_" + datetime_str + "/point_clouds/";
   path_image_str_ = std::string(homedir) + "/output_" + datetime_str + "/images/CAM_FRONT/";
+  path_timestamp_str_ = std::string(homedir) + "/output_" + datetime_str + "/timestamp/";
 
   leading_zeros = 6;
 
   boost::filesystem::path path_pointcloud(path_pointcloud_str_.c_str());
   boost::filesystem::path path_image(path_image_str_.c_str());
+  boost::filesystem::path path_timestamp(path_timestamp_str_.c_str());
 
-  boost::filesystem::create_directories(path_image);
   boost::filesystem::create_directories(path_pointcloud);
+  boost::filesystem::create_directories(path_image);
+  boost::filesystem::create_directories(path_timestamp);
 
   ROS_INFO("ImageCloudDataExport: PointCloud data stored in %s", path_pointcloud.c_str());
-  ROS_INFO("ImageCloudDataExport: Image data stored in %s", path_image_str_.c_str());
+  ROS_INFO("ImageCloudDataExport: Image data stored in %s", path_image_str_.c_str()); 
+  ROS_INFO("ImageCloudDataExport: Timestamp data stored in %s", path_timestamp_str_.c_str());
 
   ROS_INFO("ImageCloudDataExport: Waiting for data...");
   ros::spin();

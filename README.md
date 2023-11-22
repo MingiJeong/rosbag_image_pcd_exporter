@@ -28,7 +28,10 @@ The exported data will be saved under the ${HOME} directory of the user under th
  2. Source the terminal in the workspace `source devel/setup.bash`.
  3. Execute 
     1. Velodyne `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/velodyne_points`.
-    2. Ouster `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/ouster/points ouster_use:=true`.
+    2. Ouster 
+    `roslaunch ouster_ros replay.launch metadata:=/home/minkbrook/Desktop/ouster_metadata_1024x10.json`
+    `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/ouster/points ouster_use:=true`.
+4. `rosbag play catabot_KMOU_2022-11-02-22-08-02.bag --start=360 --duration=60 --rate=0.05 --pause`
  
  
  
