@@ -174,6 +174,7 @@ void ImageCloudDataExport::LidarCloudCallbackTimer(const sensor_msgs::PointCloud
 {
   // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   // pcl::fromROSMsg(*in_sensor_cloud_timer, *cloud_ptr);
+  // TODO: time based on PC, not image
 
   sensor_msgs::PointCloud2 output;
   output = *in_sensor_cloud_timer;
@@ -214,7 +215,7 @@ void ImageCloudDataExport::Run()
       cloud_sync_sub_original_ = node_handle_.subscribe(points_src, 10, &ImageCloudDataExport::LidarCloudCallbackTimer, this);
       cloud_sync_converter_pub_ = node_handle_.advertise<sensor_msgs::PointCloud2> (points_src_converted, 1);
       image_sub_ = node_handle_.subscribe(image_src, 10, &ImageCloudDataExport::ImageCallbackTimer, this);
-          // time sync subscriber
+      // time sync subscriber
       cloud_sync_sub_ = new message_filters::Subscriber<sensor_msgs::PointCloud2>(node_handle_,
                                                                            points_src_converted,
                                                                            1);
