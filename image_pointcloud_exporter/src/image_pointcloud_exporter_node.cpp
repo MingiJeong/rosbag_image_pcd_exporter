@@ -39,6 +39,8 @@
 // 1. saving time from time sync function, not separate image callback timer function
 // 2. saving altogether of 4 images of ouster or not.
 // 3. do we need pointcloud republishing?
+//    Ouster's inherent not rostime usage. We used this functionality. 
+//    In 2023, according to their update, their message contains rostime, without an issue.
 
 class ImageCloudDataExport
 {
@@ -81,11 +83,11 @@ private:
 
   // Callback functions 
   void LidarCloudCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud);
-  void LidarCloudCallbackTimer(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud_timer); // for republishing
+  void LidarCloudCallbackTimer(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud_timer); // callback func for republishing with new time (Ouster not based on ROSTIME)
 
   // void ImageCallback(const sensor_msgs::ImageConstPtr &in_image_msg);
   void ImageCallback(const sensor_msgs::CompressedImageConstPtr &in_image_msg);
-  void ImageCallbackTimer(const sensor_msgs::CompressedImageConstPtr &in_image_msg_timer); // for time saving
+  void ImageCallbackTimer(const sensor_msgs::CompressedImageConstPtr &in_image_msg_timer); // callback func for time saving
 
   void SyncedDataCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud,
     const sensor_msgs::CompressedImageConstPtr &in_image_msg);
@@ -169,40 +171,7 @@ void ImageCloudDataExport::SaveImageFile(const cv::Mat &to_save_image, const std
 }
 
 
-void ImageCloudDataExport::SyncedDataCallback(
-  const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud,
-  const sensor_msgs::CompressedImageConstPtr &in_image_msg)
-  // const sensor_msgs::ImageConstPtr &in_image_msg)
-{
-  // 1. timesync data (2023.11.27 next time: use directly from in_image_msg's time, not from separately saved image's time)
-  std::stringstream ss;
-  std::string time_stamp_ss;
-  ss << time_stamp_.sec << "." << std::setw(9) << std::setfill('0') << time_stamp_.nsec;
-  time_stamp_ss = ss.str();
-  ROS_INFO("[ImageCloudDataExport] Frame Synced: %s", time_stamp_ss.c_str());
-  
-  // 2. each data callback and save -> .jpg, .pcd
-  LidarCloudCallback(in_sensor_cloud);
-  ImageCallback(in_image_msg);
-  SaveImageFile(ir_image_saver, path_ir_image_str_);
-  SaveImageFile(refl_image_saver, path_refl_image_str_);
-  SaveImageFile(range_image_saver, path_range_image_str_);
-  SaveImageFile(sig_image_saver, path_sig_image_str_);
 
-  // 3. timestamp saving
-  std::string timestamp_path = path_timestamp_str_ + "timestamp.txt";
-  std::ofstream outputFile(timestamp_path, std::ios::app);
-  // outfile.open(timestamp_path);
-  if (!outputFile.is_open()) {
-    std::cerr << "Error: Unable to open the timestamp file." << std::endl;
-  }
-  outputFile << cloud_frame_counter_ << "," << time_stamp_ss << std::endl;
-  outputFile.close();
-
-  // increment counter
-  cloud_frame_counter_++;
-  image_frame_counter_++;
-}
 
 void ImageCloudDataExport::LidarCloudCallback(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud)
 {
@@ -247,6 +216,41 @@ void ImageCloudDataExport::LidarCloudCallbackTimer(const sensor_msgs::PointCloud
   output.header.stamp = time_stamp_;
   cloud_sync_converter_pub_.publish(output);
 
+}
+
+void ImageCloudDataExport::SyncedDataCallback(
+  const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud,
+  const sensor_msgs::CompressedImageConstPtr &in_image_msg)
+  // const sensor_msgs::ImageConstPtr &in_image_msg)
+{
+  // 1. timesync data (2023.11.27 next time: use directly from in_image_msg's time, not from separately saved image's time)
+  std::stringstream ss;
+  std::string time_stamp_ss;
+  ss << time_stamp_.sec << "." << std::setw(9) << std::setfill('0') << time_stamp_.nsec;
+  time_stamp_ss = ss.str();
+  ROS_INFO("[ImageCloudDataExport] Frame Synced: %s", time_stamp_ss.c_str());
+  
+  // 2. each data callback and save -> .jpg, .pcd
+  LidarCloudCallback(in_sensor_cloud);
+  ImageCallback(in_image_msg);
+  SaveImageFile(ir_image_saver, path_ir_image_str_);
+  SaveImageFile(refl_image_saver, path_refl_image_str_);
+  SaveImageFile(range_image_saver, path_range_image_str_);
+  SaveImageFile(sig_image_saver, path_sig_image_str_);
+
+  // 3. timestamp saving
+  std::string timestamp_path = path_timestamp_str_ + "timestamp.txt";
+  std::ofstream outputFile(timestamp_path, std::ios::app);
+  // outfile.open(timestamp_path);
+  if (!outputFile.is_open()) {
+    std::cerr << "Error: Unable to open the timestamp file." << std::endl;
+  }
+  outputFile << cloud_frame_counter_ << "," << time_stamp_ss << std::endl;
+  outputFile.close();
+
+  // increment counter
+  cloud_frame_counter_++;
+  image_frame_counter_++;
 }
 
 
