@@ -2,13 +2,24 @@
 <launch>
   <arg name="image_src" default="image_raw"/>
   <arg name="points_src" default="points_raw"/>
+  <arg name="ir_image_src" default="/ouster/nearir_image"/>
+  <arg name="refl_image_src" default="/ouster/reflec_image"/>
+  <arg name="sig_image_src" default="/ouster/signal_image"/>
+  <arg name="range_image_src" default="/ouster/range_image"/>
+
   <arg name="sync_topics" default="True"/>
   <arg name="ouster_use" default="false" />
+  <arg name="ouster_image_extract" default="false" />
 
   <node pkg="data_exporter" type="image_pointcloud_exporter" name="image_pointcloud_exporter" output="screen">
     <param name="image_src" value="$(arg image_src)"/>
     <param name="points_src" value="$(arg points_src)"/>
+    <param name="ir_image_src" value="$(arg ir_image_src)"/>
+    <param name="refl_image_src" value="$(arg refl_image_src)"/>
+    <param name="sig_image_src" value="$(arg sig_image_src)"/>
+    <param name="range_image_src" value="$(arg range_image_src)"/>
     <param name="sync_topics" value="$(arg sync_topics)"/>
     <param name="ouster_use" value="$(arg ouster_use)"/>
+    <param name="ouster_image_extract" value="$(arg ouster_image_extract)"/>
   </node>
 </launch>
