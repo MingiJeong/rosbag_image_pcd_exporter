@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(OpenCV REQUIRED)
 find_package(Qt5Core REQUIRED)
+find_package(rosbag REQUIRED)
 
 catkin_package(
         DEPENDS OpenCV                                #Non-catkin CMake projects
@@ -21,6 +22,7 @@ set(CMAKE_CXX_STANDARD 11)
 include_directories(
         ${catkin_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
+        ${rosbag_INCLUDE_DIRS}
 )
 
 add_executable(image_pointcloud_exporter
@@ -30,6 +32,7 @@ target_link_libraries(image_pointcloud_exporter PRIVATE
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
         ${OpenCV_LIBRARIES}
+        ${rosbag_LIBRARIES}
         )
 
 install(DIRECTORY launch/

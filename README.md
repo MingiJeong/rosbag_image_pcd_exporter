@@ -29,9 +29,10 @@ The exported data will be saved under the ${HOME} directory of the user under th
  3. Execute 
     1. Velodyne `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/velodyne_points`.
     2. Ouster 
-    `roslaunch ouster_ros replay.launch metadata:=/home/minkbrook/Desktop/ouster_metadata_1024x10.json`
-    `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/ouster/points ouster_use:=true`.
+    * `roslaunch ouster_ros replay.launch metadata:=/home/minkbrook/Desktop/ouster_metadata_1024x10.json`
+    * `roslaunch data_exporter jpg_pcd_export.launch image_src:=/usb_cam_surface/image_raw/compressed points_src:=/ouster/points ouster_use:=true sync_topics:=true` (otherwise, independent recording).
 4. `rosbag play catabot_KMOU_2022-11-02-22-08-02.bag --start=360 --duration=60 --rate=0.05 --pause`
+    * originally rate=1 does not support full extraction. This is because the original `ouster_ros` driver does a work behind and the converter couldn't catch it. Hence, we slowed it down.
  
- 
- 
+ **TODO** 
+    * from 2024 barbados, we don't have issue with lidar time as OSC. Becareful of doing that when we extract time sync data.

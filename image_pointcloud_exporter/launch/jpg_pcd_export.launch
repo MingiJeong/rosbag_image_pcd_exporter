@@ -6,8 +6,9 @@
   <arg name="refl_image_src" default="/ouster/reflec_image"/>
   <arg name="sig_image_src" default="/ouster/signal_image"/>
   <arg name="range_image_src" default="/ouster/range_image"/>
+  <arg name="bag_file_path" default=""/>
 
-  <arg name="sync_topics" default="True"/>
+  <arg name="sync_topics" default="true"/>
   <arg name="ouster_use" default="false" />
   <arg name="ouster_image_extract" default="false" />
 
@@ -21,5 +22,6 @@
     <param name="sync_topics" value="$(arg sync_topics)"/>
     <param name="ouster_use" value="$(arg ouster_use)"/>
     <param name="ouster_image_extract" value="$(arg ouster_image_extract)"/>
+    <param name="bag_file_path" value="$(arg bag_file_path)" />
   </node>
 </launch>

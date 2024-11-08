@@ -125,11 +125,12 @@ void ImageCloudDataExport::ImageCallback(const sensor_msgs::CompressedImageConst
   if(!sync_topics_)
   {
     image_frame_counter_++; // file saving no. increment
- 
-    // *** image time save ****
+  // } // ver 2
+
     // 1) get image time_stamp
     image_time_stamp_ = in_image_msg->header.stamp;
     // std::cout << "image time: " << image_time_stamp_ << std::endl;
+    // TODO (2024.07.02) save only this time
 
     // 2) format string change
     std::stringstream ss;
@@ -147,7 +148,7 @@ void ImageCloudDataExport::ImageCallback(const sensor_msgs::CompressedImageConst
     }
     outputFile << image_frame_counter_ << "," << time_stamp_ss << std::endl;
     outputFile.close();
-  }
+  } // MJ sync test (ver 1)
 
   // -----------------------------------------------------
   // cv convert and save
@@ -237,14 +238,21 @@ void ImageCloudDataExport::LidarCloudCallback(const sensor_msgs::PointCloud2Cons
   if(!sync_topics_)
   {
     cloud_frame_counter_++; // file no. increment
-   
-    // *** lidar time save ****
-    // without sync, independent save 
-    // given previous firmware runs on sensor osc time rather than ROS time, we need to remap of LiDAR time
+    // } // ver 1
+
     // 1) time extraction
+    // lidar_time_stamp_= in_sensor_cloud->header.stamp;
+    // std::cout << "cloud time: " << lidar_time_stamp_ << std::endl;
+
+    // version 1: without sync, independent save
     ros::Time ros_time; 
     ros_time = ros::Time::now(); // ensure to use "rosparam set use_sim_time true" 
-    // std::cout << "ros time: " << ros_time << std::endl;    
+    // std::cout << "ros time: " << ros_time << std::endl;
+
+    // version 2: MJ time sync test
+    // ros::Time ros_time; 
+    // ros_time= in_sensor_cloud->header.stamp;
+    
 
     // 2) format string change
     std::stringstream ss;
@@ -263,7 +271,7 @@ void ImageCloudDataExport::LidarCloudCallback(const sensor_msgs::PointCloud2Cons
     
     outputFile << cloud_frame_counter_ << "," << time_stamp_ss << std::endl;
     outputFile.close();
-  } 
+  } // for MJ sync ver 2
 
   // -----------------------------------------------------
   // pcd convert and save
@@ -273,16 +281,16 @@ void ImageCloudDataExport::LidarCloudCallback(const sensor_msgs::PointCloud2Cons
 
 void ImageCloudDataExport::LidarCloudCallbackTimer(const sensor_msgs::PointCloud2ConstPtr &in_sensor_cloud_timer)
 {
-  // Goal: resend pointcloud with saved image's time 
-  // given previous firmware runs on sensor osc time rather than ROS time, we need to remap of LiDAR time
+  // resend pointcloud with saved image's time 
 
   // pcl::PointCloud<pcl::PointXYZI>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   // pcl::fromROSMsg(*in_sensor_cloud_timer, *cloud_ptr);
+  // TODO: time based on PC, not image
 
   sensor_msgs::PointCloud2 output;
   output = *in_sensor_cloud_timer;
-  output.header.stamp = time_stamp_; // altogether sync (based on image time)
-  // output.header.stamp = ros::Time::now(); // time sync ver 2.
+  output.header.stamp = time_stamp_; // altogether 
+  // output.header.stamp = ros::Time::now(); // MJ time sync test ver 2
   cloud_sync_converter_pub_.publish(output);
 
 }
@@ -307,16 +315,16 @@ void ImageCloudDataExport::SyncedDataCallback(
   SaveImageFile(range_image_saver, path_range_image_str_);
   SaveImageFile(sig_image_saver, path_sig_image_str_);
 
-  // independent saving --> commeted out
+  // ver 2 commeted out
   // 3. timestamp saving
-  std::string timestamp_path = path_timestamp_str_ + "timestamp.txt";
-  std::ofstream outputFile(timestamp_path, std::ios::app);
-  // outfile.open(timestamp_path);
-  if (!outputFile.is_open()) {
-    std::cerr << "Error: Unable to open the timestamp file." << std::endl;
-  }
-  outputFile << cloud_frame_counter_ << "," << time_stamp_ss << std::endl;
-  outputFile.close();
+  // std::string timestamp_path = path_timestamp_str_ + "timestamp.txt";
+  // std::ofstream outputFile(timestamp_path, std::ios::app);
+  // // outfile.open(timestamp_path);
+  // if (!outputFile.is_open()) {
+  //   std::cerr << "Error: Unable to open the timestamp file." << std::endl;
+  // }
+  // outputFile << cloud_frame_counter_ << "," << time_stamp_ss << std::endl;
+  // outputFile.close();
 
   // increment counter
   cloud_frame_counter_++;
